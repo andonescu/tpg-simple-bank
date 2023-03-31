@@ -5,27 +5,56 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
-class Loan {
-    BigDecimal principal;
-    BigDecimal annualInterestRate;
-    int termInMonths;
+class Money {
+    private final BigDecimal value;
 
-    public Loan(BigDecimal principal, BigDecimal annualInterestRate, int termInYears) {
+    public Money(BigDecimal value) {
+        this.value = value;
+    }
+
+    public BigDecimal getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
+}
+
+class Loan {
+    private final Money principal;
+    private final BigDecimal annualInterestRate;
+    private final int termInMonths;
+
+    public Loan(Money principal, BigDecimal annualInterestRate, int termInYears) {
         this.principal = principal;
         this.annualInterestRate = annualInterestRate;
         this.termInMonths = termInYears * 12;
     }
+
+    public Money getPrincipal() {
+        return principal;
+    }
+
+    public BigDecimal getAnnualInterestRate() {
+        return annualInterestRate;
+    }
+
+    public int getTermInMonths() {
+        return termInMonths;
+    }
 }
 
 class AmortizationScheduleEntry {
-    int month;
-    BigDecimal payment;
-    BigDecimal principalPayment;
-    BigDecimal interestPayment;
-    BigDecimal remainingBalance;
+    private final int month;
+    private final Money payment;
+    private final Money principalPayment;
+    private final Money interestPayment;
+    private final Money remainingBalance;
 
-    public AmortizationScheduleEntry(int month, BigDecimal payment, BigDecimal principalPayment,
-                                     BigDecimal interestPayment, BigDecimal remainingBalance) {
+    public AmortizationScheduleEntry(int month, Money payment, Money principalPayment,
+                                     Money interestPayment, Money remainingBalance) {
         this.month = month;
         this.payment = payment;
         this.principalPayment = principalPayment;
@@ -45,15 +74,15 @@ public class LoanSchedulingSystem {
     public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan) {
         List<AmortizationScheduleEntry> schedule = new ArrayList<>();
 
-        BigDecimal monthlyInterestRate = loan.annualInterestRate.divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
-        BigDecimal payment = loan.principal.multiply(monthlyInterestRate)
-                .divide(new BigDecimal(1).subtract(monthlyInterestRate.add(BigDecimal.ONE).pow(-loan.termInMonths)), 2, RoundingMode.HALF_UP);
+        BigDecimal monthlyInterestRate = loan.getAnnualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
+        Money payment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate)
+                .divide(BigDecimal.ONE.subtract(BigDecimal.ONE.divide(monthlyInterestRate.add(BigDecimal.ONE), loan.getTermInMonths(), RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 
-        BigDecimal remainingBalance = loan.principal;
-        for (int month = 1; month <= loan.termInMonths; month++) {
-            BigDecimal interestPayment = remainingBalance.multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal principalPayment = payment.subtract(interestPayment).setScale(2, RoundingMode.HALF_UP);
-            remainingBalance = remainingBalance.subtract(principalPayment).setScale(2, RoundingMode.HALF_UP);
+        Money remainingBalance = loan.getPrincipal();
+        for (int month = 1; month <= loan.getTermInMonths(); month++) {
+            Money interestPayment = new Money(remainingBalance.getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
+            Money principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
+            remainingBalance = new Money(remainingBalance.getValue().subtract(principalPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
 
             AmortizationScheduleEntry entry = new AmortizationScheduleEntry(month, payment, principalPayment, interestPayment, remainingBalance);
             schedule.add(entry);
@@ -63,7 +92,7 @@ public class LoanSchedulingSystem {
     }
 
     public static void main(String[] args) {
-        Loan loan = new Loan(new BigDecimal("10000"), new BigDecimal("5"), 2);
+        Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
         List<AmortizationScheduleEntry> schedule = generateAmortizationSchedule(loan);
 
         for (AmortizationScheduleEntry entry : schedule) {
