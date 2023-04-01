@@ -42,6 +42,10 @@ class Money {
     public String toString() {
         return value.toString();
     }
+
+    public int compareTo(Money totalPayment) {
+        return value.compareTo(totalPayment.value);
+    }
 }
 
 class Loan {
@@ -104,6 +108,34 @@ class AmortizationScheduleEntry {
 }
 
 public class LoanSchedulingSystem {
+
+    public LoanAccount createLoanAccount(Loan loan, AmortizationStrategy strategy) {
+        List<AmortizationScheduleEntry> schedule = generateAmortizationSchedule(loan, strategy);
+        return new LoanAccount(loan, schedule);
+    }
+
+    public void makeRepayment(LoanAccount loanAccount, Money repaymentAmount) {
+        int index = loanAccount.getCurrentRepaymentIndex();
+        AmortizationScheduleEntry currentEntry = loanAccount.getAmortizationSchedule().get(index);
+
+        Money principalPayment = currentEntry.getPrincipalPayment();
+        Money interestPayment = currentEntry.getInterestPayment();
+        Money totalPayment = principalPayment.add(interestPayment);
+
+        if (repaymentAmount.compareTo(totalPayment) >= 0) {
+            loanAccount.setCurrentRepaymentIndex(index + 1);
+        } else {
+            // Recalculate the remaining schedule if necessary
+            Loan remainingLoan = new Loan(currentEntry.getRemainingBalance(),
+                    loanAccount.getLoan().getAnnualInterestRate(),
+                    loanAccount.getLoan().getTermInMonths() - (index + 1));
+            List<AmortizationScheduleEntry> newSchedule = generateAmortizationSchedule(
+                    remainingLoan, new EqualMonthlyPaymentsStrategy());
+            loanAccount.getAmortizationSchedule().subList(index + 1, loanAccount.getAmortizationSchedule().size()).clear();
+            loanAccount.getAmortizationSchedule().addAll(newSchedule);
+        }
+    }
+
 
     public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationStrategy strategy) {
         List<AmortizationScheduleEntry> schedule = new ArrayList<>();
