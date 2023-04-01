@@ -84,15 +84,19 @@ public class LoanSchedulingSystem {
         Money payment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).divide(divisor, 2, RoundingMode.HALF_UP));
 
         Money remainingBalance = loan.getPrincipal();
+        Money equalInterestPayment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
+
         for (int month = 1; month <= loan.getTermInMonths(); month++) {
-            Money interestPayment = new Money(remainingBalance.getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
+            Money interestPayment;
             Money principalPayment;
             Money newPayment;
 
             if (amortizationType == AmortizationType.EQUAL_INTEREST) {
-                principalPayment = new Money(loan.getPrincipal().getValue().divide(new BigDecimal(loan.getTermInMonths()), 2, RoundingMode.HALF_UP));
+                interestPayment = equalInterestPayment;
+                principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
                 newPayment = new Money(interestPayment.getValue().add(principalPayment.getValue()));
             } else {
+                interestPayment = new Money(remainingBalance.getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
                 principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
                 newPayment = payment;
             }
@@ -105,6 +109,7 @@ public class LoanSchedulingSystem {
 
         return schedule;
     }
+
 
     public static void main(String[] args) {
         Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
