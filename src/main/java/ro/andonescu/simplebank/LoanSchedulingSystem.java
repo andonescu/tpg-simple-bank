@@ -1,7 +1,6 @@
 package ro.andonescu.simplebank;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +61,10 @@ class AmortizationScheduleEntry {
         this.remainingBalance = remainingBalance;
     }
 
+    public Money getRemainingBalance() {
+        return remainingBalance;
+    }
+
     @Override
     public String toString() {
         return String.format("Month %d | Payment: %s | Principal: %s | Interest: %s | Remaining Balance: %s",
@@ -71,39 +74,13 @@ class AmortizationScheduleEntry {
 
 public class LoanSchedulingSystem {
 
-    public enum AmortizationType {
-        EQUAL_MONTHLY_PAYMENTS,
-        EQUAL_INTEREST
-    }
-
-    public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationType amortizationType) {
+    public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationStrategy strategy) {
         List<AmortizationScheduleEntry> schedule = new ArrayList<>();
-
-        BigDecimal monthlyInterestRate = loan.getAnnualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
-        BigDecimal divisor = BigDecimal.ONE.subtract(BigDecimal.ONE.divide((BigDecimal.ONE.add(monthlyInterestRate)).pow(loan.getTermInMonths()), 10, RoundingMode.HALF_UP));
-        Money payment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).divide(divisor, 2, RoundingMode.HALF_UP));
-
         Money remainingBalance = loan.getPrincipal();
-        Money equalInterestPayment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
 
         for (int month = 1; month <= loan.getTermInMonths(); month++) {
-            Money interestPayment;
-            Money principalPayment;
-            Money newPayment;
-
-            if (amortizationType == AmortizationType.EQUAL_INTEREST) {
-                interestPayment = equalInterestPayment;
-                principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
-                newPayment = new Money(interestPayment.getValue().add(principalPayment.getValue()));
-            } else {
-                interestPayment = new Money(remainingBalance.getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
-                principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
-                newPayment = payment;
-            }
-
-            remainingBalance = new Money(remainingBalance.getValue().subtract(principalPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
-
-            AmortizationScheduleEntry entry = new AmortizationScheduleEntry(month, newPayment, principalPayment, interestPayment, remainingBalance);
+            AmortizationScheduleEntry entry = strategy.calculateEntry(month, loan, remainingBalance);
+            remainingBalance = entry.getRemainingBalance();
             schedule.add(entry);
         }
 
@@ -113,8 +90,8 @@ public class LoanSchedulingSystem {
 
     public static void main(String[] args) {
         Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
-        List<AmortizationScheduleEntry> equalMonthlyPaymentsSchedule = generateAmortizationSchedule(loan, AmortizationType.EQUAL_MONTHLY_PAYMENTS);
-        List<AmortizationScheduleEntry> equalInterestSchedule = generateAmortizationSchedule(loan, AmortizationType.EQUAL_INTEREST);
+        List<AmortizationScheduleEntry> equalMonthlyPaymentsSchedule = generateAmortizationSchedule(loan, new EqualMonthlyPaymentsStrategy());
+        List<AmortizationScheduleEntry> equalInterestSchedule = generateAmortizationSchedule(loan, new EqualInterestStrategy());
 
         System.out.println("Equal Monthly Payments:");
         for (AmortizationScheduleEntry entry : equalMonthlyPaymentsSchedule) {
