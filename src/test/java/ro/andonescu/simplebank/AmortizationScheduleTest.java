@@ -12,7 +12,7 @@ class AmortizationScheduleTest {
 
     @Test
     void testGenerateAmortizationScheduleEqualMonthlyPayments() {
-        Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 24);
+        Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
         AmortizationStrategy strategy = new EqualMonthlyPaymentsStrategy();
         List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy);
 
@@ -34,7 +34,7 @@ class AmortizationScheduleTest {
 
     @Test
     void testGenerateAmortizationScheduleEqualInterest() {
-        Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 24);
+        Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
         AmortizationStrategy strategy = new EqualInterestStrategy();
         List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy);
 

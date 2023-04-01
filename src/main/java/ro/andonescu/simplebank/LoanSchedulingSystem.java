@@ -30,7 +30,7 @@ class Money {
 
         Money money = (Money) o;
 
-        return new EqualsBuilder().append(value, money.value).isEquals();
+        return new EqualsBuilder().append(true, value.compareTo(money.value) == 0).isEquals();
     }
 
     @Override
