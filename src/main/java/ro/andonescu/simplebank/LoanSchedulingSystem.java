@@ -4,6 +4,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,51 +74,22 @@ class Loan {
     }
 }
 
-class AmortizationScheduleEntry {
-    private final int month;
-    private final Money payment;
-    private final Money principalPayment;
-    private final Money interestPayment;
-    private final Money remainingBalance;
-
-    public AmortizationScheduleEntry(int month, Money payment, Money principalPayment,
-                                     Money interestPayment, Money remainingBalance) {
-        this.month = month;
-        this.payment = payment;
-        this.principalPayment = principalPayment;
-        this.interestPayment = interestPayment;
-        this.remainingBalance = remainingBalance;
-    }
-
-    public Money getRemainingBalance() {
-        return remainingBalance;
-    }
-
-    public Money getPrincipalPayment() {
-        return principalPayment;
-    }
-
-    public Money getInterestPayment() {
-        return interestPayment;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Month %d | Payment: %s | Principal: %s | Interest: %s | Remaining Balance: %s",
-                month, payment, principalPayment, interestPayment, remainingBalance);
-    }
-}
-
 public class LoanSchedulingSystem {
 
-    public LoanAccount createLoanAccount(Loan loan, AmortizationStrategy strategy) {
-        List<AmortizationScheduleEntry> schedule = generateAmortizationSchedule(loan, strategy);
+    public LoanAccount createLoanAccount(Loan loan, AmortizationStrategy strategy, LocalDate startDate) {
+        List<AmortizationScheduleEntry> schedule = generateAmortizationSchedule(loan, strategy, startDate);
         return new LoanAccount(loan, schedule);
     }
 
-    public void makeRepayment(LoanAccount loanAccount, Money repaymentAmount) {
+    public void makeRepayment(LoanAccount loanAccount, Money repaymentAmount, LocalDate repaymentDate) {
+        // Check if the repayment date is on or after the due date of the current entry
         int index = loanAccount.getCurrentRepaymentIndex();
         AmortizationScheduleEntry currentEntry = loanAccount.getAmortizationSchedule().get(index);
+
+        if (repaymentDate.isBefore(currentEntry.getDueDate())) {
+            // Handle early repayment, if necessary
+            return;
+        }
 
         Money principalPayment = currentEntry.getPrincipalPayment();
         Money interestPayment = currentEntry.getInterestPayment();
@@ -130,21 +103,22 @@ public class LoanSchedulingSystem {
                     loanAccount.getLoan().getAnnualInterestRate(),
                     loanAccount.getLoan().getTermInMonths() - (index + 1));
             List<AmortizationScheduleEntry> newSchedule = generateAmortizationSchedule(
-                    remainingLoan, new EqualMonthlyPaymentsStrategy());
+                    remainingLoan, new EqualMonthlyPaymentsStrategy(), repaymentDate);
             loanAccount.getAmortizationSchedule().subList(index + 1, loanAccount.getAmortizationSchedule().size()).clear();
             loanAccount.getAmortizationSchedule().addAll(newSchedule);
         }
     }
 
 
-    public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationStrategy strategy) {
+    public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationStrategy strategy, LocalDate startDate) {
         List<AmortizationScheduleEntry> schedule = new ArrayList<>();
         Money remainingBalance = loan.getPrincipal();
 
         for (int month = 1; month <= loan.getTermInMonths(); month++) {
-            AmortizationScheduleEntry entry = strategy.calculateEntry(month, loan, remainingBalance);
-            remainingBalance = entry.getRemainingBalance();
+            LocalDate dueDate = startDate.plus(month, ChronoUnit.MONTHS);
+            AmortizationScheduleEntry entry = strategy.calculateEntry(month, loan, remainingBalance, dueDate);
             schedule.add(entry);
+            remainingBalance = entry.getRemainingBalance();
         }
 
         return schedule;
@@ -153,8 +127,8 @@ public class LoanSchedulingSystem {
 
     public static void main(String[] args) {
         Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
-        List<AmortizationScheduleEntry> equalMonthlyPaymentsSchedule = generateAmortizationSchedule(loan, new EqualMonthlyPaymentsStrategy());
-        List<AmortizationScheduleEntry> equalInterestSchedule = generateAmortizationSchedule(loan, new EqualInterestStrategy());
+        List<AmortizationScheduleEntry> equalMonthlyPaymentsSchedule = generateAmortizationSchedule(loan, new EqualMonthlyPaymentsStrategy(), LocalDate.now());
+        List<AmortizationScheduleEntry> equalInterestSchedule = generateAmortizationSchedule(loan, new EqualInterestStrategy(), LocalDate.now());
 
         System.out.println("Equal Monthly Payments:");
         for (AmortizationScheduleEntry entry : equalMonthlyPaymentsSchedule) {

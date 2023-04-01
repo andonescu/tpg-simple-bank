@@ -3,6 +3,7 @@ package ro.andonescu.simplebank;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +15,7 @@ class AmortizationScheduleTest {
     void testGenerateAmortizationScheduleEqualMonthlyPayments() {
         Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
         AmortizationStrategy strategy = new EqualMonthlyPaymentsStrategy();
-        List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy);
+        List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy, LocalDate.now());
 
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
@@ -36,7 +37,7 @@ class AmortizationScheduleTest {
     void testGenerateAmortizationScheduleEqualInterest() {
         Loan loan = new Loan(new Money(new BigDecimal("10000")), new BigDecimal("5"), 2);
         AmortizationStrategy strategy = new EqualInterestStrategy();
-        List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy);
+        List<AmortizationScheduleEntry> schedule = LoanSchedulingSystem.generateAmortizationSchedule(loan, strategy, LocalDate.now());
 
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
