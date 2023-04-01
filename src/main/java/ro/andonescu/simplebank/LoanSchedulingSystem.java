@@ -1,5 +1,8 @@
 package ro.andonescu.simplebank;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +18,29 @@ class Money {
         return value;
     }
 
+    public Money add(Money money) {
+        return new Money(this.value.add(money.value));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Money money = (Money) o;
+
+        return new EqualsBuilder().append(value, money.value).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(value).toHashCode();
+    }
+
     @Override
     public String toString() {
         return value.toString();
-    }
-
-    public Money add(Money money) {
-        return new Money(this.value.add(money.value));
     }
 }
 
