@@ -11,7 +11,14 @@ public class EqualInterestStrategy implements AmortizationStrategy {
         Money interestPayment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
         Money principalPayment = new Money(loan.getPrincipal().getValue().divide(new BigDecimal(loan.getTermInMonths()), 2, RoundingMode.HALF_UP));
         Money payment = new Money(interestPayment.getValue().add(principalPayment.getValue()));
-        remainingBalance = new Money(remainingBalance.getValue().subtract(principalPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
+
+        if (month == loan.getTermInMonths()) {
+            principalPayment = remainingBalance;
+            payment = new Money(interestPayment.getValue().add(principalPayment.getValue()));
+            remainingBalance = new Money(BigDecimal.ZERO);
+        } else {
+            remainingBalance = new Money(remainingBalance.getValue().subtract(principalPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
+        }
 
         return new AmortizationScheduleEntry(month, payment, principalPayment, interestPayment, remainingBalance);
     }
