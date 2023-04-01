@@ -19,6 +19,10 @@ class Money {
     public String toString() {
         return value.toString();
     }
+
+    public Money add(Money money) {
+        return new Money(this.value.add(money.value));
+    }
 }
 
 class Loan {
@@ -63,6 +67,14 @@ class AmortizationScheduleEntry {
 
     public Money getRemainingBalance() {
         return remainingBalance;
+    }
+
+    public Money getPrincipalPayment() {
+        return principalPayment;
+    }
+
+    public Money getInterestPayment() {
+        return interestPayment;
     }
 
     @Override

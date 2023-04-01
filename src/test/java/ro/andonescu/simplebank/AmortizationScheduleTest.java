@@ -18,6 +18,17 @@ class AmortizationScheduleTest {
 
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
+
+        Money initialPrincipal = loan.getPrincipal();
+        Money totalPrincipalPaid = new Money(BigDecimal.ZERO);
+        Money totalInterestPaid = new Money(BigDecimal.ZERO);
+
+        for (AmortizationScheduleEntry entry : schedule) {
+            totalPrincipalPaid = totalPrincipalPaid.add(entry.getPrincipalPayment());
+            totalInterestPaid = totalInterestPaid.add(entry.getInterestPayment());
+        }
+
+        assertEquals(initialPrincipal, totalPrincipalPaid);
         assertEquals(new Money(BigDecimal.ZERO), schedule.get(schedule.size() - 1).getRemainingBalance());
     }
 
@@ -29,6 +40,17 @@ class AmortizationScheduleTest {
 
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
+
+        Money initialPrincipal = loan.getPrincipal();
+        Money totalPrincipalPaid = new Money(BigDecimal.ZERO);
+        Money totalInterestPaid = new Money(BigDecimal.ZERO);
+
+        for (AmortizationScheduleEntry entry : schedule) {
+            totalPrincipalPaid = totalPrincipalPaid.add(entry.getPrincipalPayment());
+            totalInterestPaid = totalInterestPaid.add(entry.getInterestPayment());
+        }
+
+        assertEquals(initialPrincipal, totalPrincipalPaid);
         assertEquals(new Money(BigDecimal.ZERO), schedule.get(schedule.size() - 1).getRemainingBalance());
     }
 }
