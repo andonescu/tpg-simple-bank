@@ -20,7 +20,7 @@ class AmortizationScheduleTest {
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
 
-        Money initialPrincipal = loan.getPrincipal();
+        Money initialPrincipal = loan.principal();
         Money totalPrincipalPaid = new Money(BigDecimal.ZERO);
         Money totalInterestPaid = new Money(BigDecimal.ZERO);
 
@@ -42,7 +42,7 @@ class AmortizationScheduleTest {
         assertNotNull(schedule);
         assertEquals(24, schedule.size());
 
-        Money initialPrincipal = loan.getPrincipal();
+        Money initialPrincipal = loan.principal();
         Money totalPrincipalPaid = new Money(BigDecimal.ZERO);
         Money totalInterestPaid = new Money(BigDecimal.ZERO);
 

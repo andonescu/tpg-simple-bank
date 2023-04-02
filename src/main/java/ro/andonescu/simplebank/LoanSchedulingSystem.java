@@ -50,27 +50,10 @@ class Money {
     }
 }
 
-class Loan {
-    private final Money principal;
-    private final BigDecimal annualInterestRate;
-    private final int termInMonths;
-
-    public Loan(Money principal, BigDecimal annualInterestRate, int termInYears) {
-        this.principal = principal;
-        this.annualInterestRate = annualInterestRate;
-        this.termInMonths = termInYears * 12;
-    }
-
-    public Money getPrincipal() {
-        return principal;
-    }
-
-    public BigDecimal getAnnualInterestRate() {
-        return annualInterestRate;
-    }
+record Loan(Money principal, BigDecimal annualInterestRate, int termInYears) {
 
     public int getTermInMonths() {
-        return termInMonths;
+        return termInYears * 12;
     }
 }
 
@@ -100,7 +83,7 @@ public class LoanSchedulingSystem {
         } else {
             // Recalculate the remaining schedule if necessary
             Loan remainingLoan = new Loan(currentEntry.getRemainingBalance(),
-                    loanAccount.getLoan().getAnnualInterestRate(),
+                    loanAccount.getLoan().annualInterestRate(),
                     loanAccount.getLoan().getTermInMonths() - (index + 1));
             List<AmortizationScheduleEntry> newSchedule = generateAmortizationSchedule(
                     remainingLoan, new EqualMonthlyPaymentsStrategy(), repaymentDate);
@@ -112,7 +95,7 @@ public class LoanSchedulingSystem {
 
     public static List<AmortizationScheduleEntry> generateAmortizationSchedule(Loan loan, AmortizationStrategy strategy, LocalDate startDate) {
         List<AmortizationScheduleEntry> schedule = new ArrayList<>();
-        Money remainingBalance = loan.getPrincipal();
+        Money remainingBalance = loan.principal();
 
         for (int month = 1; month <= loan.getTermInMonths(); month++) {
             LocalDate dueDate = startDate.plus(month, ChronoUnit.MONTHS);

@@ -7,10 +7,10 @@ import java.time.LocalDate;
 public class EqualInterestStrategy implements AmortizationStrategy {
     @Override
     public AmortizationScheduleEntry calculateEntry(int month, Loan loan, Money remainingBalance, LocalDate dueDate) {
-        BigDecimal monthlyInterestRate = loan.getAnnualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
+        BigDecimal monthlyInterestRate = loan.annualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
 
-        Money interestPayment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
-        Money principalPayment = new Money(loan.getPrincipal().getValue().divide(new BigDecimal(loan.getTermInMonths()), 2, RoundingMode.HALF_UP));
+        Money interestPayment = new Money(loan.principal().getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
+        Money principalPayment = new Money(loan.principal().getValue().divide(new BigDecimal(loan.getTermInMonths()), 2, RoundingMode.HALF_UP));
         Money payment = new Money(interestPayment.getValue().add(principalPayment.getValue()));
 
         if (month == loan.getTermInMonths()) {

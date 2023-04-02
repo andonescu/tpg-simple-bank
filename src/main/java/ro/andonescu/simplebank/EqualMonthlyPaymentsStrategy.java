@@ -8,9 +8,9 @@ public class EqualMonthlyPaymentsStrategy implements AmortizationStrategy {
     @Override
     public AmortizationScheduleEntry calculateEntry(int month, Loan loan, Money remainingBalance, LocalDate dueDate) {
 
-        BigDecimal monthlyInterestRate = loan.getAnnualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
+        BigDecimal monthlyInterestRate = loan.annualInterestRate().divide(new BigDecimal(1200), 10, RoundingMode.HALF_UP);
         BigDecimal divisor = BigDecimal.ONE.subtract(BigDecimal.ONE.divide((BigDecimal.ONE.add(monthlyInterestRate)).pow(loan.getTermInMonths()), 10, RoundingMode.HALF_UP));
-        Money payment = new Money(loan.getPrincipal().getValue().multiply(monthlyInterestRate).divide(divisor, 2, RoundingMode.HALF_UP));
+        Money payment = new Money(loan.principal().getValue().multiply(monthlyInterestRate).divide(divisor, 2, RoundingMode.HALF_UP));
 
         Money interestPayment = new Money(remainingBalance.getValue().multiply(monthlyInterestRate).setScale(2, RoundingMode.HALF_UP));
         Money principalPayment = new Money(payment.getValue().subtract(interestPayment.getValue()).setScale(2, RoundingMode.HALF_UP));
